@@ -1,10 +1,10 @@
 {
   "name": "ＬＩＭＥ",
-  "short_name": "ＬＩＭＥ",
-  "description": "任意の相手と会話できるチャットアプリ",
+  "short_name": "LIME - ハルト編",
+  "description": "【羊飼い】ハルトと会話を楽しめるチャットアプリ",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#e6b422",
+  "background_color": "#7494c0",
   "theme_color": "#7494c0",
   "icons": [
     {
