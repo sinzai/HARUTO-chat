@@ -1,0 +1,23 @@
+{
+  "name": "ＬＩＭＥ",
+  "short_name": "ＬＩＭＥ",
+  "description": "任意の相手と会話できるチャットアプリ",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#e6b422",
+  "theme_color": "#7494c0",
+  "icons": [
+    {
+      "src": "image/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "image/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ＬＩＭＥ</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#7494c0">
+    <link rel="icon" href="image/favicon.png" type="image/png">
+    <link rel="apple-touch-icon" href="image/favicon.png">
+    <link rel="shortcut icon" href="image/favicon.png" type="image/png">
+</head>
+<body>
+    <div id="splash-screen">
+        <div class="splash-logo">ＬＩＭＥ</div>
+    </div>
+
+    <div id="chat-container">
+        <header>
+            <div class="header-back">〈</div>
+            <h1></h1>
+            <div class="header-menu">≡</div>
+        </header>
+        
+        <div id="chat-log">
+            <div id="typing-indicator" class="message-row row-bot" style="display: none;">
+                <img src="image/icon.png" class="avatar" alt="icon">
+                <div class="bubble typing-bubble">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                </div>
+            </div>
+        </div>
+
+        <form id="input-area">
+            <label for="image-upload" id="plus-btn">＋</label>
+            <input type="file" id="image-upload" accept="image/*" style="display: none;">
+            
+            <input type="text" id="user-input" placeholder="Aa" autocomplete="off">
+            <button type="submit" id="send-btn">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
+                </svg>
+            </button>
+        </form>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
