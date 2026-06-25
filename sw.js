@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lime-chat-v2-haruto';
+const CACHE_NAME = 'lime-chat-v3';
 const urlsToCache = [
   './',
   './index.html',
