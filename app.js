@@ -16,7 +16,6 @@ const botReplies = [
     "ほら、構ってよ",
 ];
 
-// ギミック発動後のヤンデレセリフ
 const horrorReplies = [
     "ねえ、なんでブロックしようとしたの？",
     "逃げられると思ってるところ、本当に可愛いね、ソウタ",
@@ -37,30 +36,14 @@ const userInput = document.getElementById('user-input');
 const imageUpload = document.getElementById('image-upload');
 const typingIndicator = document.getElementById('typing-indicator');
 
-// ブロック機能用の要素と状態
 const menuBtn = document.getElementById('menu-btn');
 const dropdownMenu = document.getElementById('dropdown-menu');
 const blockBtn = document.getElementById('block-btn');
 const blockOverlay = document.getElementById('block-overlay');
 
 let isBlocked = false;
-let isHorrorMode = false; // ギミック発動フラグ
+let isHorrorMode = false;
 let gimmickTimer = null;
-
-// HTMLタグをエスケープしてXSSを防ぐ関数
-function escapeHTML(str) {
-    if (typeof str !== 'string') return str;
-    return str.replace(/[&<>'"]/g, function(match) {
-        const escape = {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            "'": '&#39;',
-            '"': '&quot;'
-        };
-        return escape[match];
-    });
-}
 
 // アプリ起動時の処理
 window.addEventListener('load', () => {
@@ -79,31 +62,56 @@ function getCurrentTime() {
     return `${h}:${m}`;
 }
 
-// メッセージ表示関数
+// 【XSS対策強化】innerHTMLを使わずDOM APIで安全に要素を構築する
 function addMessage(content, type, isImage = false) {
     const row = document.createElement('div');
     row.classList.add('message-row', type === 'bot' ? 'row-bot' : 'row-user');
 
     const time = getCurrentTime();
-    const extraClass = isImage ? 'image-bubble' : '';
+
+    // 吹き出し要素の作成
+    const bubble = document.createElement('div');
+    bubble.className = `bubble ${isImage ? 'image-bubble' : ''}`;
+
+    if (isImage) {
+        // 画像の場合は安全にimg要素を生成してsrcにデータをセット
+        const img = document.createElement('img');
+        img.src = content; 
+        img.className = 'chat-image';
+        bubble.appendChild(img);
+    } else {
+        // テキストの場合はtextContentを使用（自動的にエスケープされXSSを防ぐ）
+        bubble.textContent = content; 
+    }
+
+    // メタ情報（時間・既読）の作成
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    
+    const timeSpan = document.createElement('span');
+    timeSpan.className = 'time';
+    timeSpan.textContent = time;
 
     if (type === 'bot') {
-        const iconHtml = botIcon ? `<img src="${botIcon}" class="avatar" alt="icon">` : '';
-        row.innerHTML = `
-            ${iconHtml}
-            <div class="bubble ${extraClass}">${content}</div>
-            <div class="meta">
-                <span class="time">${time}</span>
-            </div>
-        `;
+        if (botIcon) {
+            const avatar = document.createElement('img');
+            avatar.src = botIcon;
+            avatar.className = 'avatar';
+            avatar.alt = 'icon';
+            row.appendChild(avatar);
+        }
+        meta.appendChild(timeSpan);
+        row.appendChild(bubble);
+        row.appendChild(meta);
     } else {
-        row.innerHTML = `
-            <div class="meta">
-                <span class="read">既読</span>
-                <span class="time">${time}</span>
-            </div>
-            <div class="bubble ${extraClass}">${content}</div>
-        `;
+        const readSpan = document.createElement('span');
+        readSpan.className = 'read';
+        readSpan.textContent = '既読';
+        meta.appendChild(readSpan);
+        meta.appendChild(timeSpan);
+        
+        row.appendChild(meta);
+        row.appendChild(bubble);
     }
 
     chatLog.insertBefore(row, typingIndicator);
@@ -117,7 +125,7 @@ function addSystemMessage(text, isAlert = false) {
     if (isAlert) {
         row.classList.add('system-message-alert');
     }
-    row.textContent = text;
+    row.textContent = text; // textContentで安全に出力
     chatLog.insertBefore(row, typingIndicator);
     chatLog.scrollTop = chatLog.scrollHeight;
 }
@@ -148,8 +156,8 @@ chatForm.addEventListener('submit', (e) => {
     const text = userInput.value.trim();
     if (!text) return;
 
-    const safeText = escapeHTML(text);
-    addMessage(safeText, 'user');
+    // textContentで処理されるため、生のテキストをそのまま渡しても安全です
+    addMessage(text, 'user');
     
     userInput.value = '';
     simulateBotReply();
@@ -166,8 +174,8 @@ imageUpload.addEventListener('change', function() {
     if (file) {
         const reader = new FileReader();
         reader.onload = function(e) {
-            const imgTag = `<img src="${e.target.result}" class="chat-image">`;
-            addMessage(imgTag, 'user', true);
+            // HTMLタグ文字列ではなく、Data URLのみを渡す
+            addMessage(e.target.result, 'user', true);
             simulateBotReply();
         }
         reader.readAsDataURL(file);
@@ -189,7 +197,6 @@ document.addEventListener('click', (e) => {
 });
 
 blockBtn.addEventListener('click', () => {
-    // 覚醒後はクリックしても無駄
     if (isHorrorMode) {
         addSystemMessage("拒絶することはできません。", true);
         dropdownMenu.classList.add('hidden');
@@ -200,7 +207,6 @@ blockBtn.addEventListener('click', () => {
     dropdownMenu.classList.add('hidden');
     
     if (isBlocked) {
-        // 通常のブロック処理
         blockBtn.textContent = 'ブロック解除';
         blockBtn.style.color = '#0084ff';
         blockOverlay.classList.remove('hidden');
@@ -209,11 +215,9 @@ blockBtn.addEventListener('click', () => {
         typingIndicator.style.display = 'none';
         addSystemMessage("ハルトをブロックしました。");
 
-        // ーーー ここから覚醒ギミック ーーー
         gimmickTimer = setTimeout(() => {
-            if (!isBlocked) return; // 3秒以内に解除されたら不発（普通は間に合わない）
+            if (!isBlocked) return; 
 
-            // 1. ブロック中なのに相手のタイピングが始まるホラー
             blockOverlay.textContent = "ハルトが入力中...";
             blockOverlay.style.color = "#ff3b30";
             typingIndicator.style.display = 'flex';
@@ -222,13 +226,11 @@ blockBtn.addEventListener('click', () => {
             setTimeout(() => {
                 if (!isBlocked) return;
 
-                // 2. 画面グリッチ（赤黒いフラッシュ）を発生させる
                 const glitch = document.createElement('div');
                 glitch.className = 'glitch-active';
                 document.body.appendChild(glitch);
                 setTimeout(() => glitch.remove(), 700);
 
-                // 3. ホラーモード化・強制ブロック解除
                 isHorrorMode = true;
                 isBlocked = false;
                 document.body.classList.add('horror-mode');
@@ -238,15 +240,12 @@ blockBtn.addEventListener('click', () => {
                 addSystemMessage("警告：システムが正常に動作していません。", true);
                 addSystemMessage("ハルトのブロックが強制解除されました。", true);
 
-                // メニューの文字を呪いの言葉に固定
                 blockBtn.textContent = '逃げる';
                 blockBtn.style.color = '#ff3b30';
 
-                // セリフリストをホラー用に入れ替え
                 botReplies.length = 0;
                 botReplies.push(...horrorReplies);
 
-                // 4. トドメの確定恐怖メッセージ
                 setTimeout(() => {
                     addMessage("おもしろい冗談だね、ソウタ。でも俺をブロックしようなんて悪い子だ。……いま、部屋の前にいるよ？ 開けて？", 'bot');
                 }, 1000);
@@ -254,10 +253,8 @@ blockBtn.addEventListener('click', () => {
             }, 2000);
 
         }, 3000);
-        // ーーーーーーーーーーーーーーーーー
 
     } else {
-        // 通常の解除処理（ギミック発動前のみ有効）
         blockBtn.textContent = 'ブロックする';
         blockBtn.style.color = '#ff3b30';
         blockOverlay.classList.add('hidden');
