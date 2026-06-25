@@ -20,8 +20,12 @@
         <header>
             <div class="header-back">〈</div>
             <h1>ハルト</h1>
-            <div class="header-menu">≡</div>
+            <div class="header-menu" id="menu-btn">≡</div>
         </header>
+        
+        <div id="dropdown-menu" class="hidden">
+            <div id="block-btn">ブロックする</div>
+        </div>
         
         <div id="chat-log">
             <div id="typing-indicator" class="message-row row-bot" style="display: none;">
@@ -44,6 +48,8 @@
                     <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
                 </svg>
             </button>
+            
+            <div id="block-overlay" class="hidden">ブロックしています</div>
         </form>
     </div>
     <script src="app.js"></script>
