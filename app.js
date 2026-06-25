@@ -16,6 +16,20 @@ const botReplies = [
     "ほら、構ってよ",
 ];
 
+// ギミック発動後のヤンデレセリフ
+const horrorReplies = [
+    "ねえ、なんでブロックしようとしたの？",
+    "逃げられると思ってるところ、本当に可愛いね、ソウタ",
+    "いま、ソウタの部屋の明かりが見えるよ",
+    "ドアの前にいるから、早く開けて？",
+    "お前のスマホのGPS、いつでも見れるって言ったじゃん",
+    "ずっと俺のことだけ見ててって言ったよね？",
+    "怒ってないよ。ただ、ちょっとお仕置きが必要かなって",
+    "鍵、閉めても意味ないよ？あハはは！",
+    "ねえ、開けて",
+    "逃がさないよ"
+];
+
 const botIcon = "image/icon.png";
 const chatLog = document.getElementById('chat-log');
 const chatForm = document.getElementById('input-area');
@@ -28,7 +42,10 @@ const menuBtn = document.getElementById('menu-btn');
 const dropdownMenu = document.getElementById('dropdown-menu');
 const blockBtn = document.getElementById('block-btn');
 const blockOverlay = document.getElementById('block-overlay');
+
 let isBlocked = false;
+let isHorrorMode = false; // ギミック発動フラグ
+let gimmickTimer = null;
 
 // HTMLタグをエスケープしてXSSを防ぐ関数
 function escapeHTML(str) {
@@ -47,11 +64,8 @@ function escapeHTML(str) {
 
 // アプリ起動時の処理
 window.addEventListener('load', () => {
-    // 1. スプラッシュ画面を非表示にする
     setTimeout(() => {
         document.getElementById('splash-screen').classList.add('splash-hidden');
-        
-        // 2. 画面が表示された直後に最初のメッセージを表示
         setTimeout(() => {
             simulateBotReply();
         }, 100);
@@ -97,9 +111,12 @@ function addMessage(content, type, isImage = false) {
 }
 
 // システムメッセージを表示する関数
-function addSystemMessage(text) {
+function addSystemMessage(text, isAlert = false) {
     const row = document.createElement('div');
     row.classList.add('system-message');
+    if (isAlert) {
+        row.classList.add('system-message-alert');
+    }
     row.textContent = text;
     chatLog.insertBefore(row, typingIndicator);
     chatLog.scrollTop = chatLog.scrollHeight;
@@ -107,14 +124,13 @@ function addSystemMessage(text) {
 
 // ボットの返信をシミュレート
 function simulateBotReply() {
-    if (isBlocked) return; // ブロック中は返信しない
+    if (isBlocked) return; 
 
     typingIndicator.style.display = 'flex';
     chatLog.scrollTop = chatLog.scrollHeight;
 
     setTimeout(() => {
         if (isBlocked) {
-            // 待機中にブロックされた場合は非表示にして中断
             typingIndicator.style.display = 'none';
             return; 
         }
@@ -127,17 +143,15 @@ function simulateBotReply() {
 // テキスト送信
 chatForm.addEventListener('submit', (e) => {
     e.preventDefault();
-    if (isBlocked) return; // ブロック中は送信不可
+    if (isBlocked) return; 
 
     const text = userInput.value.trim();
     if (!text) return;
 
-    // ユーザー入力をエスケープ処理してから渡す
     const safeText = escapeHTML(text);
     addMessage(safeText, 'user');
     
     userInput.value = '';
-    
     simulateBotReply();
 });
 
@@ -145,7 +159,7 @@ chatForm.addEventListener('submit', (e) => {
 imageUpload.addEventListener('change', function() {
     if (isBlocked) {
         this.value = '';
-        return; // ブロック中は画像も送信不可
+        return;
     }
 
     const file = this.files[0];
@@ -161,39 +175,94 @@ imageUpload.addEventListener('change', function() {
     this.value = '';
 });
 
-// ========== ブロック機能のUI・イベント制御 ==========
+// ========== ブロック機能 ＆ ホラー突破ギミック ==========
 
-// メニューボタンのクリックでドロップダウンをトグル
 menuBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     dropdownMenu.classList.toggle('hidden');
 });
 
-// 画面のどこかをタップしたらメニューを閉じる
 document.addEventListener('click', (e) => {
     if (!dropdownMenu.classList.contains('hidden') && e.target !== menuBtn) {
         dropdownMenu.classList.add('hidden');
     }
 });
 
-// ブロックボタンの処理
 blockBtn.addEventListener('click', () => {
+    // 覚醒後はクリックしても無駄
+    if (isHorrorMode) {
+        addSystemMessage("拒絶することはできません。", true);
+        dropdownMenu.classList.add('hidden');
+        return;
+    }
+
     isBlocked = !isBlocked;
-    dropdownMenu.classList.add('hidden'); // メニューを閉じる
+    dropdownMenu.classList.add('hidden');
     
     if (isBlocked) {
-        // ブロックした時の処理
+        // 通常のブロック処理
         blockBtn.textContent = 'ブロック解除';
-        blockBtn.style.color = '#0084ff'; // 解除時は青色
+        blockBtn.style.color = '#0084ff';
         blockOverlay.classList.remove('hidden');
-        typingIndicator.style.display = 'none'; // タイピング中なら消す
+        blockOverlay.style.color = "#888";
+        blockOverlay.textContent = "ブロックしています";
+        typingIndicator.style.display = 'none';
         addSystemMessage("ハルトをブロックしました。");
+
+        // ーーー ここから覚醒ギミック ーーー
+        gimmickTimer = setTimeout(() => {
+            if (!isBlocked) return; // 3秒以内に解除されたら不発（普通は間に合わない）
+
+            // 1. ブロック中なのに相手のタイピングが始まるホラー
+            blockOverlay.textContent = "ハルトが入力中...";
+            blockOverlay.style.color = "#ff3b30";
+            typingIndicator.style.display = 'flex';
+            chatLog.scrollTop = chatLog.scrollHeight;
+
+            setTimeout(() => {
+                if (!isBlocked) return;
+
+                // 2. 画面グリッチ（赤黒いフラッシュ）を発生させる
+                const glitch = document.createElement('div');
+                glitch.className = 'glitch-active';
+                document.body.appendChild(glitch);
+                setTimeout(() => glitch.remove(), 700);
+
+                // 3. ホラーモード化・強制ブロック解除
+                isHorrorMode = true;
+                isBlocked = false;
+                document.body.classList.add('horror-mode');
+                blockOverlay.classList.add('hidden');
+                typingIndicator.style.display = 'none';
+
+                addSystemMessage("警告：システムが正常に動作していません。", true);
+                addSystemMessage("ハルトのブロックが強制解除されました。", true);
+
+                // メニューの文字を呪いの言葉に固定
+                blockBtn.textContent = 'ずっと一緒だよ';
+                blockBtn.style.color = '#ff3b30';
+
+                // セリフリストをホラー用に入れ替え
+                botReplies.length = 0;
+                botReplies.push(...horrorReplies);
+
+                // 4. トドメの確定恐怖メッセージ
+                setTimeout(() => {
+                    addMessage("おもしろい冗談だね、ソウタ。でも俺をブロックしようなんて悪い子だ。……いま、部屋の前にいるよ？ 開けて？", 'bot');
+                }, 1000);
+
+            }, 2000);
+
+        }, 3000);
+        // ーーーーーーーーーーーーーーーーー
+
     } else {
-        // ブロック解除した時の処理
+        // 通常の解除処理（ギミック発動前のみ有効）
         blockBtn.textContent = 'ブロックする';
-        blockBtn.style.color = '#ff3b30'; // 元の赤色
+        blockBtn.style.color = '#ff3b30';
         blockOverlay.classList.add('hidden');
         addSystemMessage("ブロックを解除しました。");
+        if (gimmickTimer) clearTimeout(gimmickTimer);
     }
 });
 
