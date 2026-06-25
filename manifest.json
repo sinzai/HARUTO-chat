@@ -1,6 +1,6 @@
 {
   "name": "ＬＩＭＥ",
-  "short_name": "LIME",
+  "short_name": "ＬＩＭＥ",
   "description": "ヤンデレと会話を楽しむチャットアプリ",
   "start_url": "./index.html",
   "display": "standalone",
