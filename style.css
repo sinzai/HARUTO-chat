@@ -51,6 +51,7 @@ body {
     display: flex;
     flex-direction: column;
     box-shadow: 0 0 30px rgba(0,0,0,0.2);
+    position: relative;
 }
 
 header {
@@ -109,7 +110,7 @@ header h1 { font-size: 1.1rem; margin: 0; color: #333; flex: 1; text-align: cent
     display: block;
 }
 .image-bubble {
-    padding: 0; /* 画像の場合は余白をなくす */
+    padding: 0;
     background: transparent;
     box-shadow: none;
 }
@@ -153,6 +154,7 @@ header h1 { font-size: 1.1rem; margin: 0; color: #333; flex: 1; text-align: cent
 }
 
 #input-area {
+    position: relative;
     padding: 10px 15px;
     background: #f5f5f5;
     display: flex;
@@ -190,3 +192,55 @@ header h1 { font-size: 1.1rem; margin: 0; color: #333; flex: 1; text-align: cent
     padding: 0 5px;
 }
 #send-btn:hover { opacity: 0.7; }
+
+/* ========== ブロック機能用のスタイル ========== */
+#dropdown-menu {
+    position: absolute;
+    top: 50px;
+    right: 10px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    overflow: hidden;
+    z-index: 100;
+    transition: opacity 0.2s;
+}
+#dropdown-menu.hidden {
+    display: none;
+}
+#block-btn {
+    padding: 12px 20px;
+    color: #ff3b30;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 14px;
+}
+#block-btn:hover {
+    background: #f0f0f0;
+}
+
+#block-overlay {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(245, 245, 245, 0.9);
+    color: #888;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    z-index: 10;
+}
+#block-overlay.hidden {
+    display: none;
+}
+
+.system-message {
+    text-align: center;
+    margin: 10px 0;
+    font-size: 12px;
+    color: #666;
+    background: rgba(255, 255, 255, 0.6);
+    padding: 4px 10px;
+    border-radius: 12px;
+    align-self: center;
+}
