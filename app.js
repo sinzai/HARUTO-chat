@@ -1,14 +1,18 @@
+// プレイヤー名と相手の名前を定数で管理
+const PLAYER_NAME = "ソウタ";
+const BOT_NAME = "ハルト";
+
 const botReplies = [
-    "ねえソウタ、今どこ？",
+    `ねえ${PLAYER_NAME}、今どこ？`,
     "ちょっと一人でコンビニ行ってきてもいい？笑",
     "また俺のスマホのログ、こっそり監視してたでしょ？",
     "ほんと心配性だよねえ",
     "仕事ばっかり。そんなに俺から目を離してていいの？",
     "今なら俺、窓から逃げ出せちゃうかもよ？",
     "俺がいなくなったら、お前狂って死んじゃうでしょ？",
-    "ずっと俺のことだけ見ててよ、ソウタ",
+    `ずっと俺のことだけ見ててよ、${PLAYER_NAME}`,
     "お前の匂いでもキスマークでも、好きなだけ上書きしていいよ",
-    "俺のこれから先は全部、ソウタの腕の中だけで予約済みだから",
+    `俺のこれから先は全部、${PLAYER_NAME}の腕の中だけで予約済みだから`,
     "コーヒー淹れて。濃いめで",
     "……何、また変なシミュレーションして絶望してるの？",
     "早く帰ってきて",
@@ -19,7 +23,7 @@ const botReplies = [
 const horrorReplies = [
     "ねえ、なんでブロックしようとしたの？",
     "逃げられると思ってるところ、本当に可愛いね",
-    "いま、ソウタの部屋の明かりが見えるよ",
+    `いま、${PLAYER_NAME}の部屋の明かりが見えるよ`,
     "ドアの前にいるから、早く開けて？",
     "お前のスマホのGPS、いつでも見れるって言ったじゃん",
     "ずっと俺のことだけ見ててって言ったよね？",
@@ -47,6 +51,13 @@ let gimmickTimer = null;
 
 // アプリ起動時の処理
 window.addEventListener('load', () => {
+    // ヘッダー名とページタイトルを定数から動的に反映
+    document.title = `LIME - ${BOT_NAME}編`;
+    const headerTitle = document.querySelector('header h1');
+    if (headerTitle) {
+        headerTitle.textContent = BOT_NAME;
+    }
+
     setTimeout(() => {
         document.getElementById('splash-screen').classList.add('splash-hidden');
         setTimeout(() => {
@@ -219,12 +230,13 @@ blockBtn.addEventListener('click', () => {
         blockOverlay.style.color = "#888";
         blockOverlay.textContent = "ブロックしています";
         typingIndicator.style.display = 'none';
-        addSystemMessage("ハルトをブロックしました。");
+        
+        addSystemMessage(`${BOT_NAME}をブロックしました。`);
 
         gimmickTimer = setTimeout(() => {
             if (!isBlocked) return; 
 
-            blockOverlay.textContent = "ハルトが入力中...";
+            blockOverlay.textContent = `${BOT_NAME}が入力中...`;
             blockOverlay.style.color = "#ff3b30";
             typingIndicator.style.display = 'flex';
             chatLog.scrollTop = chatLog.scrollHeight;
@@ -244,7 +256,7 @@ blockBtn.addEventListener('click', () => {
                 typingIndicator.style.display = 'none';
 
                 addSystemMessage("警告：システムが正常に動作していません。", true);
-                addSystemMessage("ハルトのブロックが強制解除されました。", true);
+                addSystemMessage(`${BOT_NAME}のブロックが強制解除されました。`, true);
 
                 blockBtn.textContent = '逃げる';
                 blockBtn.style.color = '#ff3b30';
@@ -253,7 +265,7 @@ blockBtn.addEventListener('click', () => {
                 botReplies.push(...horrorReplies);
 
                 setTimeout(() => {
-                    addMessage("おもしろい冗談だね、ソウタ。……いま、部屋の前にいるよ？ 開けて？", 'bot');
+                    addMessage(`おもしろい冗談だね、${PLAYER_NAME}。……いま、部屋の前にいるよ？ 開けて？`, 'bot');
                 }, 1000);
 
             }, 2000);
