@@ -239,7 +239,7 @@ blockBtn.addEventListener('click', () => {
                 addSystemMessage("ハルトのブロックが強制解除されました。", true);
 
                 // メニューの文字を呪いの言葉に固定
-                blockBtn.textContent = 'ずっと一緒だよ';
+                blockBtn.textContent = '逃げる';
                 blockBtn.style.color = '#ff3b30';
 
                 // セリフリストをホラー用に入れ替え
