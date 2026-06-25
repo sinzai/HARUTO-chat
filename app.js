@@ -172,13 +172,21 @@ imageUpload.addEventListener('change', function() {
 
     const file = this.files[0];
     if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            // HTMLタグ文字列ではなく、Data URLのみを渡す
-            addMessage(e.target.result, 'user', true);
-            simulateBotReply();
+        // 【XSS対策強化1】ファイルタイプが確実に画像であるかをチェック
+        // ※SVG画像のスクリプト実行リスクを避けるため、念のためSVGも弾く場合は
+        // file.type.match(/^image\/(jpeg|png|gif|webp)$/) などにするとより強固です。
+        if (!file.type.startsWith('image/')) {
+            alert('画像ファイルのみ送信可能です。');
+            this.value = '';
+            return;
         }
-        reader.readAsDataURL(file);
+
+        // 【XSS対策強化2】Base64(Data URI)ではなく、ブラウザが生成する安全なBlob URLを使用する
+        const blobUrl = window.URL.createObjectURL(file);
+        
+        // 安全な Blob URL を渡す
+        addMessage(blobUrl, 'user', true);
+        simulateBotReply();
     }
     this.value = '';
 });
