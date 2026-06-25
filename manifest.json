@@ -1,7 +1,7 @@
 {
   "name": "ＬＩＭＥ",
   "short_name": "ＬＩＭＥ",
-  "description": "推しと会話を楽しむチャットアプリ",
+  "description": "",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#7494c0",
