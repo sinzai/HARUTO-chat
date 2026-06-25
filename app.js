@@ -23,6 +23,13 @@ const userInput = document.getElementById('user-input');
 const imageUpload = document.getElementById('image-upload');
 const typingIndicator = document.getElementById('typing-indicator');
 
+// ブロック機能用の要素と状態
+const menuBtn = document.getElementById('menu-btn');
+const dropdownMenu = document.getElementById('dropdown-menu');
+const blockBtn = document.getElementById('block-btn');
+const blockOverlay = document.getElementById('block-overlay');
+let isBlocked = false;
+
 // HTMLタグをエスケープしてXSSを防ぐ関数
 function escapeHTML(str) {
     if (typeof str !== 'string') return str;
@@ -89,12 +96,28 @@ function addMessage(content, type, isImage = false) {
     chatLog.scrollTop = chatLog.scrollHeight;
 }
 
+// システムメッセージを表示する関数
+function addSystemMessage(text) {
+    const row = document.createElement('div');
+    row.classList.add('system-message');
+    row.textContent = text;
+    chatLog.insertBefore(row, typingIndicator);
+    chatLog.scrollTop = chatLog.scrollHeight;
+}
+
 // ボットの返信をシミュレート
 function simulateBotReply() {
+    if (isBlocked) return; // ブロック中は返信しない
+
     typingIndicator.style.display = 'flex';
     chatLog.scrollTop = chatLog.scrollHeight;
 
     setTimeout(() => {
+        if (isBlocked) {
+            // 待機中にブロックされた場合は非表示にして中断
+            typingIndicator.style.display = 'none';
+            return; 
+        }
         typingIndicator.style.display = 'none';
         const reply = botReplies[Math.floor(Math.random() * botReplies.length)];
         addMessage(reply, 'bot');
@@ -104,6 +127,8 @@ function simulateBotReply() {
 // テキスト送信
 chatForm.addEventListener('submit', (e) => {
     e.preventDefault();
+    if (isBlocked) return; // ブロック中は送信不可
+
     const text = userInput.value.trim();
     if (!text) return;
 
@@ -118,6 +143,11 @@ chatForm.addEventListener('submit', (e) => {
 
 // 画像送信
 imageUpload.addEventListener('change', function() {
+    if (isBlocked) {
+        this.value = '';
+        return; // ブロック中は画像も送信不可
+    }
+
     const file = this.files[0];
     if (file) {
         const reader = new FileReader();
@@ -129,6 +159,42 @@ imageUpload.addEventListener('change', function() {
         reader.readAsDataURL(file);
     }
     this.value = '';
+});
+
+// ========== ブロック機能のUI・イベント制御 ==========
+
+// メニューボタンのクリックでドロップダウンをトグル
+menuBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    dropdownMenu.classList.toggle('hidden');
+});
+
+// 画面のどこかをタップしたらメニューを閉じる
+document.addEventListener('click', (e) => {
+    if (!dropdownMenu.classList.contains('hidden') && e.target !== menuBtn) {
+        dropdownMenu.classList.add('hidden');
+    }
+});
+
+// ブロックボタンの処理
+blockBtn.addEventListener('click', () => {
+    isBlocked = !isBlocked;
+    dropdownMenu.classList.add('hidden'); // メニューを閉じる
+    
+    if (isBlocked) {
+        // ブロックした時の処理
+        blockBtn.textContent = 'ブロック解除';
+        blockBtn.style.color = '#0084ff'; // 解除時は青色
+        blockOverlay.classList.remove('hidden');
+        typingIndicator.style.display = 'none'; // タイピング中なら消す
+        addSystemMessage("ハルトをブロックしました。");
+    } else {
+        // ブロック解除した時の処理
+        blockBtn.textContent = 'ブロックする';
+        blockBtn.style.color = '#ff3b30'; // 元の赤色
+        blockOverlay.classList.add('hidden');
+        addSystemMessage("ブロックを解除しました。");
+    }
 });
 
 // PWA Service Worker
