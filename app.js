@@ -245,12 +245,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     botReplies.push(...horrorReplies);
 
                     setTimeout(() => {
-                        addMessage(`おもしろい冗談だね、${PLAYER_NAME}。……いま、部屋の前にいるよ？ 開けて？`, 'bot');
+                        addMessage(`おもしろい冗談だね、${PLAYER_NAME}。僕をブロックしようなんて悪い子だ。……いま、部屋の前にいるよ？ 開けて？`, 'bot');
                     }, 1000);
 
                 }, 2000);
 
-            }, 3000);
+            }, 1500);
 
         } else {
             blockBtn.textContent = 'ブロックする';
