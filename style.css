@@ -18,6 +18,7 @@ body {
     height: 100vh;
     display: flex;
     justify-content: center;
+    transition: background 0.5s ease;
 }
 
 /* スプラッシュ画面 */
@@ -52,6 +53,7 @@ body {
     flex-direction: column;
     box-shadow: 0 0 30px rgba(0,0,0,0.2);
     position: relative;
+    transition: all 0.5s ease;
 }
 
 header {
@@ -60,6 +62,7 @@ header {
     display: flex;
     align-items: center;
     border-bottom: 1px solid rgba(0,0,0,0.1);
+    transition: all 0.5s ease;
 }
 
 .header-back { font-size: 20px; color: #333; cursor: pointer; font-weight: bold; width: 30px; }
@@ -101,6 +104,7 @@ header h1 { font-size: 1.1rem; margin: 0; color: #333; flex: 1; text-align: cent
     box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     max-width: 65vw;
     word-wrap: break-word;
+    transition: all 0.3s ease;
 }
 
 /* 送信された画像のスタイル */
@@ -130,7 +134,7 @@ header h1 { font-size: 1.1rem; margin: 0; color: #333; flex: 1; text-align: cent
 .row-user { align-self: flex-end; justify-content: flex-end; }
 .row-user .bubble { background: var(--user-color); border-top-right-radius: 2px; }
 .row-user .meta { margin-right: 5px; align-items: flex-end; justify-content: flex-end; }
-.read { margin-bottom: 2px; }
+.read { margin-bottom: 2px; transition: color 0.5s; }
 
 /* 入力中アニメーション */
 .typing-bubble {
@@ -161,6 +165,7 @@ header h1 { font-size: 1.1rem; margin: 0; color: #333; flex: 1; text-align: cent
     align-items: center;
     gap: 10px;
     border-top: 1px solid #ddd;
+    transition: all 0.5s ease;
 }
 
 #plus-btn {
@@ -222,13 +227,15 @@ header h1 { font-size: 1.1rem; margin: 0; color: #333; flex: 1; text-align: cent
 #block-overlay {
     position: absolute;
     top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(245, 245, 245, 0.9);
+    background: rgba(245, 245, 245, 0.95);
     color: #888;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 14px;
     z-index: 10;
+    font-weight: bold;
+    transition: all 0.3s ease;
 }
 #block-overlay.hidden {
     display: none;
@@ -243,4 +250,72 @@ header h1 { font-size: 1.1rem; margin: 0; color: #333; flex: 1; text-align: cent
     padding: 4px 10px;
     border-radius: 12px;
     align-self: center;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* ========== ギミック：ホラーモード演出用スタイル ========== */
+@keyframes glitch-flash {
+    0% { background: rgba(255, 0, 0, 0); }
+    15% { background: rgba(255, 0, 0, 0.8); }
+    30% { background: rgba(0, 0, 0, 0.95); }
+    45% { background: rgba(255, 0, 0, 0.6); }
+    60% { background: rgba(0, 0, 0, 0.9); }
+    75% { background: rgba(255, 0, 0, 0.8); }
+    100% { background: rgba(255, 0, 0, 0); }
+}
+.glitch-active {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    z-index: 10000;
+    pointer-events: none;
+    animation: glitch-flash 0.7s steps(4) forwards;
+}
+
+/* ヤンデレ覚醒後の黒赤テーマ */
+body.horror-mode {
+    background-image: none;
+    background: radial-gradient(circle, #3a0d0d 0%, #110303 100%);
+}
+body.horror-mode #chat-container {
+    background: rgba(20, 5, 5, 0.75);
+    box-shadow: 0 0 40px rgba(255, 0, 0, 0.5);
+}
+body.horror-mode header {
+    background: #1a0505;
+    border-bottom: 1px solid #ff3b30;
+}
+body.horror-mode header h1, 
+body.horror-mode .header-back, 
+body.horror-mode .header-menu {
+    color: #ff3b30;
+    text-shadow: 0 0 5px rgba(255,0,0,0.5);
+}
+body.horror-mode .row-bot .bubble {
+    background: #4a1515;
+    color: #ffcccc;
+    border: 1px solid #ff3b30;
+    box-shadow: 0 0 8px rgba(255,0,0,0.3);
+}
+body.horror-mode .meta, body.horror-mode .read {
+    color: #8a5555;
+}
+body.horror-mode #input-area {
+    background: #150505;
+    border-top: 1px solid #ff3b30;
+}
+body.horror-mode #user-input {
+    background: #220a0a;
+    border: 1px solid #551a1a;
+    color: #ffcccc;
+}
+body.horror-mode .system-message-alert {
+    background: rgba(255, 0, 0, 0.15);
+    color: #ff3b30;
+    border: 1px solid rgba(255, 0, 0, 0.3);
+    font-weight: bold;
 }
