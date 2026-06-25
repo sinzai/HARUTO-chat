@@ -18,7 +18,7 @@ const botReplies = [
 
 const horrorReplies = [
     "ねえ、なんでブロックしようとしたの？",
-    "逃げられると思ってるところ、本当に可愛いね、ソウタ",
+    "逃げられると思ってるところ、本当に可愛いね",
     "いま、ソウタの部屋の明かりが見えるよ",
     "ドアの前にいるから、早く開けて？",
     "お前のスマホのGPS、いつでも見れるって言ったじゃん",
@@ -173,8 +173,6 @@ imageUpload.addEventListener('change', function() {
     const file = this.files[0];
     if (file) {
         // 【XSS対策強化1】ファイルタイプが確実に画像であるかをチェック
-        // ※SVG画像のスクリプト実行リスクを避けるため、念のためSVGも弾く場合は
-        // file.type.match(/^image\/(jpeg|png|gif|webp)$/) などにするとより強固です。
         if (!file.type.startsWith('image/')) {
             alert('画像ファイルのみ送信可能です。');
             this.value = '';
@@ -255,7 +253,7 @@ blockBtn.addEventListener('click', () => {
                 botReplies.push(...horrorReplies);
 
                 setTimeout(() => {
-                    addMessage("おもしろい冗談だね、ソウタ。でも俺をブロックしようなんて悪い子だ。……いま、部屋の前にいるよ？ 開けて？", 'bot');
+                    addMessage("おもしろい冗談だね、ソウタ。……いま、部屋の前にいるよ？ 開けて？", 'bot');
                 }, 1000);
 
             }, 2000);
