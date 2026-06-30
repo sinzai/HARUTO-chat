@@ -1,6 +1,22 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // ==========================================
+    // 基本設定
+    // ==========================================
     const PLAYER_NAME = "ソウタ";
     const BOT_NAME = "ハルト";
+
+    // ==========================================
+    // タイマー・連投間隔の設定（ミリ秒: 1000 = 1秒）
+    // ==========================================
+    const REPLY_TIMING = {
+        NORMAL_REPLY: 1500,         // 単発の返信にかかる時間（通常）
+        AUTO_SPAM_NORMAL: 5000,    // 放置した時の自動連投間隔（通常モード）
+        AUTO_SPAM_HORROR: 2000,     // 放置した時の自動連投間隔（ホラーモード）
+        MULTI_HORROR_UNBLOCK: 1500, // 強制ブロック解除直後の波状攻撃の間隔
+        MULTI_HORROR_ESCAPE: 800,   // 「逃げる」を押した時の波状攻撃の間隔
+        BLOCK_GIMMICK_START: 1500,  // ブロックしてから「入力中...」が出るまでの時間
+        BLOCK_GIMMICK_TRANSITION: 2000 // 「入力中...」から強制解除されるまでの時間
+    };
 
     const botReplies = [
         `ねえ${PLAYER_NAME}、今どこ？`,
@@ -47,6 +63,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let isBlocked = false;
     let isHorrorMode = false;
     let gimmickTimer = null;
+    let horrorTransitionTimer = null;
+    let autoSpamTimer = null; 
 
     // 初期化処理
     document.title = `LIME - ${BOT_NAME}編`;
@@ -56,11 +74,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     setTimeout(() => {
-        document.getElementById('splash-screen').classList.add('splash-hidden');
+        const splash = document.getElementById('splash-screen');
+        if (splash) splash.classList.add('splash-hidden');
         setTimeout(() => {
             simulateBotReply();
         }, 100);
     }, 100);
+
+    // 放置していると勝手にメッセージが飛んでくるタイマーを起動
+    resetAutoSpamTimer();
 
     function getCurrentTime() {
         const now = new Date();
@@ -74,7 +96,6 @@ document.addEventListener('DOMContentLoaded', () => {
         row.classList.add('message-row', type === 'bot' ? 'row-bot' : 'row-user');
 
         const time = getCurrentTime();
-
         const bubble = document.createElement('div');
         bubble.className = `bubble ${isImage ? 'image-bubble' : ''}`;
 
@@ -82,6 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const img = document.createElement('img');
             img.src = content; 
             img.className = 'chat-image';
+            img.onload = () => { window.URL.revokeObjectURL(content); };
             bubble.appendChild(img);
         } else {
             bubble.textContent = content; 
@@ -89,7 +111,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const meta = document.createElement('div');
         meta.className = 'meta';
-        
         const timeSpan = document.createElement('span');
         timeSpan.className = 'time';
         timeSpan.textContent = time;
@@ -111,7 +132,6 @@ document.addEventListener('DOMContentLoaded', () => {
             readSpan.textContent = '既読';
             meta.appendChild(readSpan);
             meta.appendChild(timeSpan);
-            
             row.appendChild(meta);
             row.appendChild(bubble);
         }
@@ -123,14 +143,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function addSystemMessage(text, isAlert = false) {
         const row = document.createElement('div');
         row.classList.add('system-message');
-        if (isAlert) {
-            row.classList.add('system-message-alert');
-        }
+        if (isAlert) row.classList.add('system-message-alert');
         row.textContent = text;
         chatLog.insertBefore(row, typingIndicator);
         chatLog.scrollTop = chatLog.scrollHeight;
     }
 
+    // 単発の返信シミュレート
     function simulateBotReply() {
         if (isBlocked) return; 
 
@@ -145,7 +164,58 @@ document.addEventListener('DOMContentLoaded', () => {
             typingIndicator.style.display = 'none';
             const reply = botReplies[Math.floor(Math.random() * botReplies.length)];
             addMessage(reply, 'bot');
-        }, 1500); 
+            resetAutoSpamTimer(); // 返信したらタイマーをリセット
+        }, REPLY_TIMING.NORMAL_REPLY); 
+    }
+
+    // 複数個のメッセージを、指定の間隔で順番に連投する関数
+    function sendMultipleReplies(messages, interval = 2000) {
+        let index = 0;
+
+        function sendNext() {
+            if (isBlocked || index >= messages.length) {
+                typingIndicator.style.display = 'none';
+                resetAutoSpamTimer();
+                return;
+            }
+
+            typingIndicator.style.display = 'flex';
+            chatLog.scrollTop = chatLog.scrollHeight;
+
+            setTimeout(() => {
+                if (isBlocked) {
+                    typingIndicator.style.display = 'none';
+                    return;
+                }
+                typingIndicator.style.display = 'none';
+                addMessage(messages[index], 'bot');
+                index++;
+                
+                // 次のメッセージへ（再帰呼び出し）
+                sendNext();
+            }, interval);
+        }
+
+        sendNext();
+    }
+
+    // ユーザーが操作しなくても勝手に連投が来るためのタイマー制御
+    function resetAutoSpamTimer() {
+        if (autoSpamTimer) clearInterval(autoSpamTimer);
+        
+        const intervalTime = isHorrorMode ? REPLY_TIMING.AUTO_SPAM_HORROR : REPLY_TIMING.AUTO_SPAM_NORMAL;
+        
+        autoSpamTimer = setInterval(() => {
+            if (isBlocked) return;
+            simulateBotReply();
+        }, intervalTime);
+    }
+
+    function setFormDisabled(disabled) {
+        userInput.disabled = disabled;
+        imageUpload.disabled = disabled;
+        const submitBtn = chatForm.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.disabled = disabled;
     }
 
     chatForm.addEventListener('submit', (e) => {
@@ -156,17 +226,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!text) return;
 
         addMessage(text, 'user');
-        
         userInput.value = '';
+        
+        // ユーザーが送信したら、少し遅れて通常の返信
         simulateBotReply();
     });
 
     imageUpload.addEventListener('change', function() {
-        if (isBlocked) {
-            this.value = '';
-            return;
-        }
-
+        if (isBlocked) { this.value = ''; return; }
         const file = this.files[0];
         if (file) {
             if (!file.type.startsWith('image/')) {
@@ -174,7 +241,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.value = '';
                 return;
             }
-
             const blobUrl = window.URL.createObjectURL(file);
             addMessage(blobUrl, 'user', true);
             simulateBotReply();
@@ -195,7 +261,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     blockBtn.addEventListener('click', () => {
         if (isHorrorMode) {
-            addSystemMessage("拒絶することはできません。", true);
+            // ホラーモード中の「逃げる」ボタンの処理
+            addSystemMessage("ブロックできません。", true);
+            // 逃げようとすると、さらに狂った連投が届く
+            sendMultipleReplies([
+                "ねえ", "ねえ", "ねえ", "ねえってば", 
+                `逃がさないって言ったよね、${PLAYER_NAME}。`
+            ], REPLY_TIMING.MULTI_HORROR_ESCAPE);
             dropdownMenu.classList.add('hidden');
             return;
         }
@@ -210,6 +282,8 @@ document.addEventListener('DOMContentLoaded', () => {
             blockOverlay.style.color = "#888";
             blockOverlay.textContent = "ブロックしています";
             typingIndicator.style.display = 'none';
+            setFormDisabled(true);
+            if (autoSpamTimer) clearInterval(autoSpamTimer); // ブロック中は自動連投を停止
             
             addSystemMessage(`${BOT_NAME}をブロックしました。`);
 
@@ -221,7 +295,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 typingIndicator.style.display = 'flex';
                 chatLog.scrollTop = chatLog.scrollHeight;
 
-                setTimeout(() => {
+                horrorTransitionTimer = setTimeout(() => {
                     if (!isBlocked) return;
 
                     const glitch = document.createElement('div');
@@ -234,6 +308,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.body.classList.add('horror-mode');
                     blockOverlay.classList.add('hidden');
                     typingIndicator.style.display = 'none';
+                    setFormDisabled(false);
 
                     addSystemMessage("警告：システムが正常に動作していません。", true);
                     addSystemMessage(`${BOT_NAME}のブロックが強制解除されました。`, true);
@@ -241,28 +316,37 @@ document.addEventListener('DOMContentLoaded', () => {
                     blockBtn.textContent = '逃げる';
                     blockBtn.style.color = '#ff3b30';
 
+                    // ホラー用のセリフに入れ替え
                     botReplies.length = 0;
                     botReplies.push(...horrorReplies);
 
-                    setTimeout(() => {
-                        addMessage(`おもしろい冗談だね、${PLAYER_NAME}。もう俺のこといらなくなったの？笑`, 'bot');
-                    }, 1000);
+                    // ブロック解除直後に波状攻撃を仕掛ける
+                    sendMultipleReplies([
+                        `おもしろい冗談だね、${PLAYER_NAME}。`,
+                        "もう俺のこといらなくなったの？笑",
+                        "ダメだよ、俺から離れちゃ。"
+                    ], REPLY_TIMING.MULTI_HORROR_UNBLOCK);
 
-                }, 2000);
+                }, REPLY_TIMING.BLOCK_GIMMICK_TRANSITION);
 
-            }, 1500);
+            }, REPLY_TIMING.BLOCK_GIMMICK_START);
 
         } else {
             blockBtn.textContent = 'ブロックする';
             blockBtn.style.color = '#ff3b30';
             blockOverlay.classList.add('hidden');
+            setFormDisabled(false);
             addSystemMessage("ブロックを解除しました。");
+            
             if (gimmickTimer) clearTimeout(gimmickTimer);
+            if (horrorTransitionTimer) clearTimeout(horrorTransitionTimer);
+            resetAutoSpamTimer();
         }
     });
 
-    // PWA Service Worker
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js');
+        navigator.serviceWorker.register('sw.js').catch(err => {
+            console.log('ServiceWorker registration failed: ', err);
+        });
     }
 });
