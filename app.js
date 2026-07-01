@@ -9,8 +9,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // タイマー・連投間隔の設定（ミリ秒: 1000 = 1秒）
     // ==========================================
     const REPLY_TIMING = {
-        NORMAL_REPLY: 1500,         // 単発の返信にかかる時間（通常）
-        AUTO_SPAM_NORMAL: 5000,    // 放置した時の自動連投間隔（通常モード）
+        NORMAL_REPLY: 1500,         // 単発の返信に要する時間（通常）
+        AUTO_SPAM_NORMAL: 5000,     // 放置した時の自動連投間隔（通常モード）
         AUTO_SPAM_HORROR: 2000,     // 放置した時の自動連投間隔（ホラーモード）
         MULTI_HORROR_UNBLOCK: 1500, // 強制ブロック解除直後の波状攻撃の間隔
         MULTI_HORROR_ESCAPE: 800,   // 「逃げる」を押した時の波状攻撃の間隔
